@@ -4,7 +4,7 @@ let node_list_gen : node list QCheck.Gen.t =
   let open QCheck.Gen in
   int_range 1 10 >>= fun t ->
   float_range 4.0 6.0 >>= fun t_scale ->
-  list_size (return t) (pair bool (return false)) >>= fun t_list ->
+  list_size (return (t * 4)) (pair bool (return false)) >>= fun t_list ->
   let s = Float.of_int t *. t_scale |> Int.of_float in
   let s = if (s + t) mod 2 = 0 then s + 1 else s in
   list_size (return s) (pair bool (return true)) >|= fun s_list ->
@@ -61,19 +61,47 @@ let simulate nodes =
 let enough_nodes l =
   let s, t = List.partition (fun x -> x.reliable) l in
   let s, t = (List.length s, List.length t) in
-  s > 3 * t
+  s < 3 * t
 
-let all_reliable_have_same_value =
+let all_reliable_have_value nodes v =
+  nodes
+  |> List.filter (fun x -> x.reliable)
+  |> List.for_all (fun (x : node) -> x.value = v)
+
+(* let all_reliable_have_same_value =
   QCheck.Test.make ~count:10000
     ~name:"all reliable nodes have same value at t + 1" node_list_arb
     (fun node_list ->
       QCheck.assume (enough_nodes node_list);
-      let final = simulate node_list |> List.filter (fun x -> x.reliable) in
-      let first_value = (List.hd final).value in
-      List.for_all (fun (x : node) -> x.value = first_value) final)
+      let result = simulate node_list in
+      all_reliable_have_value result (List.hd result).value *)
 
-let () =
-  let suite =
-    List.map QCheck_alcotest.to_alcotest [ all_reliable_have_same_value ]
-  in
-  Alcotest.run "my test" [ ("suite", suite) ]
+let node id r v = { id; reliable = r; value = v }
+
+let message id value = { id; value }
+   let test_foo =
+     Alcotest.test_case
+    "asdf"
+    `Quick
+     (fun () ->
+     let nodes = [
+       node 0 false false;
+       node 1 false false;
+       node 2 false false;
+       node 3 false false;
+       node 4 true true;
+       node  5 true true;
+     ] in
+     let final = simulate nodes in
+
+     )
+
+   let () =
+     let unit_tests = [test_foo] in
+     let pbt =
+       List.map QCheck_alcotest.to_alcotest [ all_reliable_have_same_value ]
+     in
+     Alcotest.run "my test" [
+       ("unit tests", unit_tests) ;
+       (* ("pbt", pbt) *)
+       ]

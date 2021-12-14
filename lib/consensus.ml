@@ -4,6 +4,7 @@ type message = { value : bool; id : int }
 
 let majority_value : message list -> bool =
  fun l ->
+  if (List.length l) mod 2 = 0 then failwith "Requires odd number";
   let sum =
     List.fold_left (fun acc m -> if m.value then acc + 1 else acc) 0 l
   in
